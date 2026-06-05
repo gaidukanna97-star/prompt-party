@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Квіз з основ робочого процесу</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #607080;
+      --panel: #ffffff;
+      --page: #eef3f5;
+      --line: #d7e0e5;
+      --blue: #246b8f;
+      --blue-dark: #164b68;
+      --gold: #b9852d;
+      --green: #18764f;
+      --green-bg: #e7f5ee;
+      --red: #b93832;
+      --red-bg: #fae9e7;
+      --shadow: 0 18px 42px rgba(23, 32, 42, 0.13);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(36, 107, 143, 0.14), transparent 34rem),
+        linear-gradient(135deg, #eef3f5 0%, #f8f3e9 48%, #eaf3ef 100%);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+    }
+
+    header {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      width: fit-content;
+      padding: 7px 10px;
+      border: 1px solid rgba(36, 107, 143, 0.28);
+      border-radius: 8px;
+      color: var(--blue-dark);
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 7vw, 3.8rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 780px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .quiz-card,
+    .summary-card {
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .quiz-card {
+      min-height: 520px;
+      padding: 22px;
+    }
+
+    .summary-card {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    .progress-track {
+      height: 10px;
+      border: 1px solid #d9e3e8;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e6edf1;
+      margin-bottom: 22px;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--gold));
+      transition: width 220ms ease;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.42rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .question-text {
+      margin: 0 0 18px;
+      color: #2d3a45;
+      font-size: 1.06rem;
+      line-height: 1.55;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .option {
+      width: 100%;
+      min-height: 60px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+    }
+
+    .option:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(36, 107, 143, 0.55);
+      box-shadow: 0 10px 24px rgba(23, 32, 42, 0.1);
+    }
+
+    .option:disabled {
+      cursor: default;
+    }
+
+    .option.correct {
+      border-color: rgba(24, 118, 79, 0.75);
+      background: var(--green-bg);
+      color: #10593a;
+    }
+
+    .option.incorrect {
+      border-color: rgba(185, 56, 50, 0.75);
+      background: var(--red-bg);
+      color: #8c2520;
+    }
+
+    .option:focus-visible,
+    .primary:focus-visible,
+    .secondary:focus-visible {
+      outline: 3px solid rgba(36, 107, 143, 0.32);
+      outline-offset: 2px;
+    }
+
+    .feedback {
+      display: none;
+      margin: 0 0 18px;
+      padding: 14px 15px;
+      border-radius: 8px;
+      line-height: 1.5;
+    }
+
+    .feedback.show {
+      display: block;
+    }
+
+    .feedback.correct {
+      border: 1px solid rgba(24, 118, 79, 0.35);
+      background: var(--green-bg);
+      color: #10593a;
+    }
+
+    .feedback.incorrect {
+      border: 1px solid rgba(185, 56, 50, 0.35);
+      background: var(--red-bg);
+      color: #8c2520;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .primary,
+    .secondary {
+      min-height: 44px;
+      padding: 11px 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--blue);
+      color: white;
+    }
+
+    .primary:hover:not(:disabled) {
+      background: var(--blue-dark);
+    }
+
+    .primary:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .secondary {
+      border-color: var(--line);
+      background: white;
+      color: var(--blue-dark);
+    }
+
+    .secondary:hover {
+      border-color: rgba(36, 107, 143, 0.45);
+    }
+
+    .stat {
+      display: grid;
+      gap: 4px;
+      padding-bottom: 13px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stat:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: 850;
+    }
+
+    .result {
+      display: none;
+      min-height: 420px;
+      align-content: center;
+      text-align: center;
+    }
+
+    .result.show {
+      display: grid;
+      gap: 14px;
+    }
+
+    .score {
+      margin: 0;
+      font-size: clamp(3rem, 14vw, 5.5rem);
+      line-height: 0.95;
+      font-weight: 900;
+      color: var(--blue-dark);
+    }
+
+    .result-message {
+      margin: 0 auto;
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.55;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 820px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-card {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: min(100% - 20px, 1080px);
+        padding: 18px 0;
+      }
+
+      .quiz-card {
+        padding: 16px;
+      }
+
+      .topline,
+      .actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .summary-card {
+        grid-template-columns: 1fr;
+      }
+
+      .primary,
+      .secondary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="badge">Інтерактивне навчання</div>
+      <h1>Квіз з основ робочого процесу</h1>
+      <p class="subtitle">Відпрацюйте базову логіку GitHub Pages, Codex Cloud, гілок, pull request і людської перевірки.</p>
+    </header>
+
+    <main class="layout">
+      <section class="quiz-card" aria-label="Квіз">
+        <div id="quiz-view">
+          <div class="topline">
+            <span id="counter">Питання 1 з 10</span>
+            <span id="status">Оберіть одну відповідь</span>
+          </div>
+          <div class="progress-track" aria-label="Прогрес квізу">
+            <div id="progress" class="progress-fill"></div>
+          </div>
+          <h2 id="title"></h2>
+          <p id="question" class="question-text"></p>
+          <div id="options" class="options"></div>
+          <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+          <div class="actions">
+            <button id="next" class="primary" type="button" disabled>Наступне питання</button>
+          </div>
+        </div>
+
+        <div id="result-view" class="result" aria-label="Результат квізу">
+          <p id="score" class="score">0%</p>
+          <h2 id="result-title">Результат</h2>
+          <p id="result-message" class="result-message"></p>
+          <div class="actions">
+            <button id="restart" class="secondary" type="button">Почати знову</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="summary-card" aria-label="Підсумок квізу">
+        <div class="stat">
+          <span class="stat-label">Питання</span>
+          <span id="total-stat" class="stat-value">10</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Правильно</span>
+          <span id="correct-stat" class="stat-value">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Прогрес</span>
+          <span id="progress-stat" class="stat-value">0%</span>
+        </div>
+      </aside>
+    </main>
+
+    <footer>Офлайн-файл квізу. Без зовнішніх залежностей для запуску.</footer>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        "title": "Основа робочого процесу",
+        "question": "Чому розробнику варто розуміти ручний workflow GitHub Pages перед використанням Codex Cloud?",
+        "options": [
+          "Тому що Codex Cloud повністю замінює Git, GitHub і локальне тестування.",
+          "Тому що Codex Cloud працює поверх понять GitHub: гілок, комітів, pull request і review.",
+          "Тому що GitHub Pages працює лише тоді, коли увімкнено Codex Cloud."
+        ],
+        "correct": 1,
+        "feedback": "Codex Cloud не прибирає GitHub workflow. Він автоматизує частину роботи, тому розуміння гілок, комітів, pull request і review потрібне, щоб контролювати дії агента."
+      },
+      {
+        "title": "Ручний цикл публікації",
+        "question": "Студент редагує index.html у локальному проєкті GitHub Pages. Який workflow найкраще описує правильний цикл публікації?",
+        "options": [
+          "git status -> git add . -> git commit -> git push -> перевірити опубліковану сторінку",
+          "git push -> редагувати index.html -> git commit -> git status -> перевірити опубліковану сторінку",
+          "git init -> git push -> git add . -> відкрити localhost -> merge pull request"
+        ],
+        "correct": 0,
+        "feedback": "Після редагування файлу розробник має переглянути зміни, додати їх у staging, створити коміт, відправити його на GitHub і перевірити, що опублікований сайт відображає оновлення."
+      },
+      {
+        "title": "Роль Codex Cloud",
+        "question": "Як найкраще описати Codex Cloud в інженерному workflow на основі GitHub?",
+        "options": [
+          "Заміна людського review, бо він може генерувати скриншоти й diff.",
+          "Сервіс публікації, який автоматично перетворює кожен локальний HTML-файл на сайт.",
+          "AI-агент виконання, який може аналізувати репозиторій, вносити зміни в окремій гілці й готувати pull request."
+        ],
+        "correct": 2,
+        "feedback": "Codex Cloud варто сприймати як агента виконання. Він може перевіряти код, реалізовувати зміни, запускати перевірки й готувати pull request, але людина все одно переглядає та затверджує результат."
+      },
+      {
+        "title": "Ізоляція гілки",
+        "question": "Чому безпечніше, щоб Codex Cloud працював в окремій гілці, а не змінював main напряму?",
+        "options": [
+          "Окрема гілка не дає неперевіреним змінам одразу вплинути на стабільну версію проєкту.",
+          "Окрема гілка змушує GitHub Pages розгортати сайт швидше, ніж main.",
+          "Окрема гілка прибирає потребу запускати тести або переглядати diff."
+        ],
+        "correct": 0,
+        "feedback": "Робота в окремій гілці ізолює зміни агента. Це дозволяє розробнику переглянути, протестувати або відхилити роботу до того, як вона потрапить у стабільну гілку main."
+      },
+      {
+        "title": "Сенс pull request",
+        "question": "У чому головна інженерна цінність pull request в AI-assisted workflow?",
+        "options": [
+          "Він приховує деталі реалізації, щоб розробнику не потрібно було переглядати код.",
+          "Він створює контрольну точку review, де перед merge можна перевірити diff, тести, скриншоти й намір зміни.",
+          "Він автоматично гарантує, що згенерований код правильний і готовий до production."
+        ],
+        "correct": 1,
+        "feedback": "Pull request є review gate. Він дозволяє розробнику перевірити, що змінилося, порівняти це із задачею, запустити валідацію і вирішити, чи варто робити merge."
+      },
+      {
+        "title": "Відповідальність людини",
+        "question": "Codex Cloud додав нове поле форми, показав успішний результат тестів і створив pull request. Що має зробити розробник далі?",
+        "options": [
+          "Одразу зробити merge, бо тести пройшли і Codex створив pull request.",
+          "Видалити гілку, бо AI-generated code взагалі не можна довіряти.",
+          "Переглянути diff, перевірити поведінку функції, пошукати регресії й лише тоді вирішити, чи робити merge."
+        ],
+        "correct": 2,
+        "feedback": "Успішні тести корисні, але цього недостатньо. Розробник має перевірити, що реалізація відповідає задачі, працює правильно і не додає небажаних змін."
+      },
+      {
+        "title": "Якість задачі",
+        "question": "Який prompt задачі найсильніший для AI-агента для кодування?",
+        "options": [
+          "Зроби сайт кращим і покращ дизайн.",
+          "Додай таблицю порівняння після секції Codex Cloud, збережи наявний стиль, зроби її mobile-friendly і не додавай зовнішніх залежностей.",
+          "Зміни щось на головній сторінці й зроби гарний результат."
+        ],
+        "correct": 1,
+        "feedback": "Сильна задача визначає місце зміни, очікуваний результат, обмеження й критерії перевірки. Це зменшує неоднозначність і полегшує review роботи агента."
+      },
+      {
+        "title": "Локальна перевірка",
+        "question": "Після того як Codex Cloud створив feature branch, навіщо розробник може виконати git fetch і git switch локально?",
+        "options": [
+          "Щоб переглянути й протестувати гілку агента на своєму комп'ютері перед merge.",
+          "Щоб назавжди видалити remote pull request з GitHub.",
+          "Щоб перетворити сайт GitHub Pages на Next.js застосунок."
+        ],
+        "correct": 0,
+        "feedback": "Fetch і switch на feature branch дозволяють розробнику запустити проєкт локально, перевірити поведінку в браузері й провалідувати зміну перед merge."
+      },
+      {
+        "title": "Вибір агента",
+        "question": "У навчальному pipeline з CLI-агентами яка пара агентів найкраще підходить для планування структури уроку, а потім створення HTML-сторінки?",
+        "options": [
+          "Claude для планування й декомпозиції, потім Codex для HTML, CSS, JavaScript і редагування файлів.",
+          "Codex для абстрактного планування уроку, потім Gemini для редагування CSS-анімацій.",
+          "OpenClaw для одноразового brainstorming, потім Claude для автоматичного push файлів на GitHub."
+        ],
+        "correct": 0,
+        "feedback": "Claude краще підходить для reasoning, декомпозиції та структури. Codex краще підходить для implementation tasks: редагування файлів, написання scripts і створення HTML/CSS/JS outputs."
+      },
+      {
+        "title": "Системне мислення",
+        "question": "Яка послідовність найкраще описує надійний AI-assisted pipeline для створення контенту?",
+        "options": [
+          "Згенерувати HTML -> сподіватися, що працює -> публікувати прямо в main -> виправити пізніше, якщо хтось поскаржиться.",
+          "Джерельний матеріал -> структура -> вибір агента -> генерація -> файлові результати -> валідація -> покращення.",
+          "Попросити агента зробити красивий дизайн -> пропустити тести -> зробити merge усіх змін -> архівувати задачу."
+        ],
+        "correct": 1,
+        "feedback": "Надійний pipeline починається з джерельного матеріалу, створює структуру, обирає правильного агента, генерує файли, валідує результат і потім покращує його. Це керована інженерна робота, а не магія однієї кнопки."
+      }
+    ];
+
+    const state = {
+      index: 0,
+      score: 0,
+      selected: null
+    };
+
+    const quizView = document.querySelector("#quiz-view");
+    const resultView = document.querySelector("#result-view");
+    const counter = document.querySelector("#counter");
+    const statusText = document.querySelector("#status");
+    const progress = document.querySelector("#progress");
+    const title = document.querySelector("#title");
+    const question = document.querySelector("#question");
+    const options = document.querySelector("#options");
+    const feedback = document.querySelector("#feedback");
+    const nextButton = document.querySelector("#next");
+    const restartButton = document.querySelector("#restart");
+    const totalStat = document.querySelector("#total-stat");
+    const correctStat = document.querySelector("#correct-stat");
+    const progressStat = document.querySelector("#progress-stat");
+    const scoreText = document.querySelector("#score");
+    const resultTitle = document.querySelector("#result-title");
+    const resultMessage = document.querySelector("#result-message");
+
+    function renderQuestion() {
+      const item = quizData[state.index];
+      const progressPercent = Math.round((state.index / quizData.length) * 100);
+
+      state.selected = null;
+      counter.textContent = `Питання ${state.index + 1} з ${quizData.length}`;
+      statusText.textContent = "Оберіть одну відповідь";
+      progress.style.width = `${progressPercent}%`;
+      title.textContent = item.title;
+      question.textContent = item.question;
+      options.innerHTML = "";
+      feedback.className = "feedback";
+      feedback.textContent = "";
+      nextButton.disabled = true;
+      nextButton.textContent = state.index === quizData.length - 1 ? "Показати результат" : "Наступне питання";
+
+      item.options.forEach((option, optionIndex) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "option";
+        button.textContent = option;
+        button.addEventListener("click", () => selectAnswer(optionIndex));
+        options.appendChild(button);
+      });
+
+      updateStats();
+    }
+
+    function selectAnswer(optionIndex) {
+      if (state.selected !== null) {
+        return;
+      }
+
+      const item = quizData[state.index];
+      const isCorrect = optionIndex === item.correct;
+      state.selected = optionIndex;
+
+      if (isCorrect) {
+        state.score += 1;
+      }
+
+      Array.from(options.children).forEach((button, index) => {
+        button.disabled = true;
+        if (index === item.correct) {
+          button.classList.add("correct");
+        }
+        if (index === optionIndex && !isCorrect) {
+          button.classList.add("incorrect");
+        }
+      });
+
+      statusText.textContent = isCorrect ? "Правильно" : "Неправильно";
+      feedback.className = `feedback show ${isCorrect ? "correct" : "incorrect"}`;
+      feedback.textContent = `${isCorrect ? "Правильно." : "Неправильно."} ${item.feedback}`;
+      nextButton.disabled = false;
+      updateStats();
+    }
+
+    function updateStats() {
+      const answeredCount = state.selected === null ? state.index : state.index + 1;
+      const progressPercent = Math.round((answeredCount / quizData.length) * 100);
+      totalStat.textContent = quizData.length;
+      correctStat.textContent = state.score;
+      progressStat.textContent = `${progressPercent}%`;
+      progress.style.width = `${progressPercent}%`;
+    }
+
+    function showResult() {
+      const percent = Math.round((state.score / quizData.length) * 100);
+
+      quizView.classList.add("hidden");
+      resultView.classList.add("show");
+      progress.style.width = "100%";
+      scoreText.textContent = `${percent}%`;
+
+      if (percent >= 90) {
+        resultTitle.textContent = "Відмінно";
+        resultMessage.textContent = `Ви відповіли правильно на ${state.score} з ${quizData.length} питань. Ви добре контролюєте ключові поняття workflow.`;
+      } else if (percent >= 70) {
+        resultTitle.textContent = "Добра робота";
+        resultMessage.textContent = `Ви відповіли правильно на ${state.score} з ${quizData.length} питань. Перегляньте пропущені моменти й доведіть workflow до автоматизму.`;
+      } else if (percent >= 50) {
+        resultTitle.textContent = "Потрібна практика";
+        resultMessage.textContent = `Ви відповіли правильно на ${state.score} з ${quizData.length} питань. Зосередьтеся на гілках, pull request і кроках валідації.`;
+      } else {
+        resultTitle.textContent = "Повторіть матеріал";
+        resultMessage.textContent = `Ви відповіли правильно на ${state.score} з ${quizData.length} питань. Перед наступною спробою перегляньте джерельний матеріал.`;
+      }
+
+      updateStats();
+    }
+
+    function restartQuiz() {
+      state.index = 0;
+      state.score = 0;
+      state.selected = null;
+      resultView.classList.remove("show");
+      quizView.classList.remove("hidden");
+      renderQuestion();
+    }
+
+    nextButton.addEventListener("click", () => {
+      if (state.index === quizData.length - 1) {
+        showResult();
+        return;
+      }
+
+      state.index += 1;
+      renderQuestion();
+    });
+
+    restartButton.addEventListener("click", restartQuiz);
+
+    renderQuestion();
+  </script>
+</body>
+</html>
